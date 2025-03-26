@@ -28,7 +28,7 @@ func RegisterAgent(serverURL string, agent *entities.Agent) {
 		log.Fatalf("could not register: %v", err)
 	}
 
-	err = stream.Send(&protos.RegisterRequest{Ip: agent.IP, Name: agent.Name})
+	err = stream.Send(&protos.RegisterRequest{Ip: agent.IP, Hostname: agent.Hostname, Service: agent.Service, Version: agent.Version})
 	if err != nil {
 		log.Fatalf("failed to send registration: %v", err)
 	}
@@ -45,7 +45,7 @@ func RegisterAgent(serverURL string, agent *entities.Agent) {
 
 	for {
 		time.Sleep(1 * time.Second)
-		err := stream.Send(&protos.RegisterRequest{Name: agent.Name})
+		err := stream.Send(&protos.RegisterRequest{Ip: agent.IP, Hostname: agent.Hostname, Service: agent.Service, Version: agent.Version})
 		if err != nil {
 			log.Printf("Failed to send heartbeat: %v", err)
 			return

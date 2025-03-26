@@ -6,13 +6,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupFiber() *fiber.App {
+func SetupFiber(host string, port string) *fiber.App {
 	app := fiber.New()
 	routes.AddRegisteredHandler(app)
-	app.Listen(":8000")
+	app.Listen(host + ":" + port)
 	return app
 }
 
-func RunWebHost() {
-	SetupFiber()
+func RunWebHost(host string, port string) {
+	go SetupFiber(host, port)
 }

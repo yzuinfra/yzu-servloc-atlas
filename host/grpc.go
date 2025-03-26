@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"yzuinfra/atlas/entities"
 	"yzuinfra/atlas/host/regmap"
 	"yzuinfra/atlas/protos"
 
@@ -20,15 +21,23 @@ func (s *BiRPCServer) RegisterAgent(stream protos.BiRPC_RegisterAgentServer) err
 		return err
 	}
 
-	regmap.AddAgent(firstMsg.Ip, firstMsg.Name)
-	log.Printf("Agent registered: %s %s", firstMsg.Ip, firstMsg.Name)
+	agentID := firstMsg.Service + "-" + firstMsg.Version + "-" + firstMsg.Hostname
+
+	regmap.AddAgent(&entities.Agent{
+		ID:       agentID,
+		IP:       firstMsg.Ip,
+		Hostname: firstMsg.Hostname,
+		Service:  firstMsg.Service,
+		Version:  firstMsg.Version,
+	})
+	log.Printf("Agent registered: %s %s", firstMsg.Ip, agentID)
 
 	go func() {
 		for {
 			_, err := stream.Recv()
 			if err != nil {
-				log.Printf("Agent %s disconnected", firstMsg.Name)
-				regmap.RemoveAgent(firstMsg.Ip)
+				log.Printf("Agent %s disconnected", agentID)
+				regmap.RemoveAgent(agentID)
 				return
 			}
 		}
@@ -36,8 +45,8 @@ func (s *BiRPCServer) RegisterAgent(stream protos.BiRPC_RegisterAgentServer) err
 
 	for {
 		if err := stream.Send(&protos.RegisterResponse{Registered: true}); err != nil {
-			log.Printf("Failed to send keepalive to %s: %v", firstMsg.Name, err)
-			regmap.RemoveAgent(firstMsg.Ip)
+			log.Printf("Failed to send keepalive to %s: %v", agentID, err)
+			regmap.RemoveAgent(agentID)
 			return err
 		}
 		time.Sleep(1 * time.Second)

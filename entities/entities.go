@@ -1,6 +1,9 @@
 package entities
 
 type Agent struct {
-	IP   string
-	Name string
+	ID       string
+	IP       string
+	Hostname string
+	Service  string
+	Version  string
 }

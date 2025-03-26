@@ -6,8 +6,8 @@ import (
 
 var AgentMap = make(map[string]*entities.Agent)
 
-func AddAgent(id string, name string) {
-	AgentMap[id] = &entities.Agent{IP: id, Name: name}
+func AddAgent(agent *entities.Agent) {
+	AgentMap[agent.ID] = agent
 }
 
 func RemoveAgent(id string) {

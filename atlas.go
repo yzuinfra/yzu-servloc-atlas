@@ -12,30 +12,37 @@ import (
 
 func main() {
 	runServer := flag.Bool("s", false, "Run atlas host server")
-	serverPort := flag.String("port", "8000", "Port to run the server on")
-	agentServerURL := flag.String("server_url", "", "Run atlas agent server, specify host server location.")
-	agentName := flag.String("name", "Agent", "Agent name")
+	serverWebHost := flag.String("web_host", "0.0.0.0", "Host to listen on")
+	serverWebPort := flag.String("web_port", "8000", "Port to run the web server on")
+	serverGRPCPort := flag.String("grpc_port", "8001", "Port to run the gRPC server on")
+	agentServerURL := flag.String("server_url", "127.0.0.1:8001", "Run atlas agent server, specify host server location.")
+	agentHostname := flag.String("hostname", "Agent", "Agent name")
+	agentService := flag.String("service", "atlas", "Agent service name")
+	agentVersion := flag.String("version", "1.0", "Agent version")
 	flag.Parse()
 
-	if !*runServer && *agentServerURL == "" {
-		log.Fatalf("either -s for running the host or -server_url with -name for the agent is required")
+	if !*runServer && (*agentServerURL == "" || *agentHostname == "" || *agentService == "" || *agentVersion == "") {
+		flag.PrintDefaults()
 	}
 
 	if *runServer {
 		log.Println("Running server")
-		go host.RunWebHost()
-		host.RunGRPCHost(*serverPort) // blocking
+		host.RunWebHost(*serverWebHost, *serverWebPort)
+		host.RunGRPCHost(*serverGRPCPort) // blocking
+		log.Fatalln("Server stopped")     // should never happen
 	}
 
 	if *agentServerURL != "" {
-		if *agentName == "" {
-			log.Fatalf("agent name is required")
-		}
 		ip, err := ipify.GetIp()
 		if err != nil {
 			log.Fatalf("could not get ip: %v", err)
 		} else {
-			agent.RegisterAgent(*agentServerURL, &entities.Agent{IP: ip, Name: *agentName})
+			agent.RegisterAgent(*agentServerURL, &entities.Agent{
+				IP:       ip,
+				Hostname: *agentHostname,
+				Service:  *agentService,
+				Version:  *agentVersion,
+			})
 			log.Println("Agent registered")
 		}
 	}
