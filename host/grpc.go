@@ -1,0 +1,58 @@
+package host
+
+import (
+	"log"
+	"net"
+	"time"
+	"yzuinfra/atlas/host/regmap"
+	"yzuinfra/atlas/protos"
+
+	"google.golang.org/grpc"
+)
+
+type BiRPCServer struct {
+	protos.BiRPCServer
+}
+
+func (s *BiRPCServer) RegisterAgent(stream protos.BiRPC_RegisterAgentServer) error {
+	firstMsg, err := stream.Recv()
+	if err != nil {
+		return err
+	}
+
+	regmap.AddAgent(firstMsg.Ip, firstMsg.Name)
+	log.Printf("Agent registered: %s %s", firstMsg.Ip, firstMsg.Name)
+
+	go func() {
+		for {
+			_, err := stream.Recv()
+			if err != nil {
+				log.Printf("Agent %s disconnected", firstMsg.Name)
+				regmap.RemoveAgent(firstMsg.Ip)
+				return
+			}
+		}
+	}()
+
+	for {
+		if err := stream.Send(&protos.RegisterResponse{Registered: true}); err != nil {
+			log.Printf("Failed to send keepalive to %s: %v", firstMsg.Name, err)
+			regmap.RemoveAgent(firstMsg.Ip)
+			return err
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func RunGRPCHost(port string) {
+	lis, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	protos.RegisterBiRPCServer(s, &BiRPCServer{})
+	log.Println("GRPC server starting")
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}

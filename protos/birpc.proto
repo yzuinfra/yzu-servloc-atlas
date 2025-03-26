@@ -1,0 +1,15 @@
+syntax = "proto3";
+option go_package = 'yzuinfra/atlas/protos';
+
+message RegisterRequest {
+    string ip = 1;
+    string name = 2;
+}
+
+message RegisterResponse {
+    bool registered = 1;
+}
+
+service BiRPC {
+    rpc RegisterAgent (stream RegisterRequest) returns (stream RegisterResponse);
+}
