@@ -21,3 +21,23 @@ func GetAgents() []*entities.Agent {
 	}
 	return agents
 }
+
+func GetAgentsWithService(service string) []*entities.Agent {
+	agents := make([]*entities.Agent, 0, len(AgentMap))
+	for _, agent := range AgentMap {
+		if agent.Service == service {
+			agents = append(agents, agent)
+		}
+	}
+	return agents
+}
+
+func GetAgentsFromHostname(hostname string) []*entities.Agent {
+	agents := make([]*entities.Agent, 0, len(AgentMap))
+	for _, agent := range AgentMap {
+		if agent.Hostname == hostname {
+			agents = append(agents, agent)
+		}
+	}
+	return agents
+}

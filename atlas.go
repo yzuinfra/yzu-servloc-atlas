@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"log"
+	"net/http"
 	"yzuinfra/atlas/agent"
 	"yzuinfra/atlas/entities"
 	"yzuinfra/atlas/host"
@@ -19,6 +21,7 @@ func main() {
 	agentHostname := flag.String("hostname", "Agent", "Agent name")
 	agentService := flag.String("service", "atlas", "Agent service name")
 	agentVersion := flag.String("version", "1.0", "Agent version")
+	agentDisableCertificateVerification := flag.Bool("disable_certificate_verification", false, "Disable certificate verification for agent")
 	flag.Parse()
 
 	if !*runServer && (*agentServerURL == "" || *agentHostname == "" || *agentService == "" || *agentVersion == "") {
@@ -33,6 +36,9 @@ func main() {
 	}
 
 	if *agentServerURL != "" {
+		if *agentDisableCertificateVerification {
+			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		}
 		ip, err := ipify.GetIp()
 		if err != nil {
 			log.Fatalf("could not get ip: %v", err)
