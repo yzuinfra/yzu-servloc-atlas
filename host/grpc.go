@@ -53,8 +53,8 @@ func (s *BiRPCServer) RegisterAgent(stream protos.BiRPC_RegisterAgentServer) err
 	}
 }
 
-func RunGRPCHost(port string) {
-	lis, err := net.Listen("tcp", ":"+port)
+func RunGRPCHost(host string, port string) {
+	lis, err := net.Listen("tcp", host+":"+port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
